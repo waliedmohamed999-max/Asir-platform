@@ -53,6 +53,94 @@ HTML;
     exit;
 }
 
+function send_json(array $payload, int $status = 200): void
+{
+    http_response_code($status);
+    header('Content-Type: application/json; charset=utf-8');
+    header('Cache-Control: no-store');
+
+    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
+    exit;
+}
+
+function has_database_config(): bool
+{
+    return env_value('DB_URL') !== null || env_value('DB_HOST') !== null;
+}
+
+function send_mock_api_response(string $path): void
+{
+    $event = [
+        'id' => 1,
+        'slug' => 'aseer-demo-event',
+        'title' => 'منصة عسير جاهزة للتشغيل',
+        'subtitle' => 'أضف بيانات قاعدة البيانات في Vercel لإظهار الفعاليات الحقيقية',
+        'description' => 'هذا محتوى مؤقت يظهر فقط عند عدم ضبط قاعدة البيانات.',
+        'image_url' => '/branding/aseer-logo.png',
+        'banner_image_url' => '/branding/aseer-logo.png',
+        'venue_name' => 'عسير',
+        'starts_at' => gmdate('c', strtotime('+3 days')),
+        'start_date' => gmdate('Y-m-d H:i:s', strtotime('+3 days')),
+        'starting_price' => 0,
+        'is_featured' => true,
+        'category' => ['id' => 1, 'slug' => 'events', 'name' => 'فعاليات'],
+        'city' => ['id' => 1, 'slug' => 'aseer', 'name' => 'عسير'],
+        'tickets' => [],
+    ];
+
+    if ($path === '/api/v1/home') {
+        send_json([
+            'banners' => [[
+                'title' => 'منصة عسير تعمل الآن',
+                'subtitle' => 'النشر ناجح، وتفعيل البيانات يحتاج DB فقط',
+                'badge' => 'Vercel',
+                'image_url' => '/branding/aseer-logo.png',
+                'hero_image_url' => '/branding/aseer-logo.png',
+            ]],
+            'quick_actions' => [],
+            'trending_searches' => ['عسير', 'فعاليات', 'تذاكر'],
+            'sections' => [
+                'app_stories' => [],
+                'events' => [$event],
+                'recommended' => [$event],
+                'trending' => [$event],
+                'upcoming' => [$event],
+                'featured_events' => [],
+                'featured_tourism' => [],
+                'today_cards' => [],
+                'experience_cards' => [],
+                'offers' => [],
+                'services' => [],
+                'places' => [],
+                'most_requested' => [],
+                'nearby' => [],
+                'today' => [$event],
+            ],
+            'filters' => [
+                'cities' => [$event['city']],
+                'categories' => [$event['category']],
+            ],
+        ]);
+    }
+
+    if ($path === '/api/v1/events') {
+        send_json(['data' => [$event], 'meta' => ['database_configured' => false]]);
+    }
+
+    if ($path === '/api/v1/resale-listings') {
+        send_json(['data' => []]);
+    }
+
+    if (preg_match('#^/api/v1/(offers|services|venues|cities|categories|recommendations)$#', $path)) {
+        send_json(['data' => []]);
+    }
+
+    send_json([
+        'message' => 'Database environment variables are not configured on Vercel yet.',
+        'required' => ['DB_HOST or DB_URL', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD'],
+    ], 503);
+}
+
 foreach ([
     'APP_ENV' => 'production',
     'APP_DEBUG' => 'false',
@@ -79,7 +167,13 @@ if (empty($_ENV['APP_KEY']) && empty($_SERVER['APP_KEY']) && getenv('APP_KEY') =
     $_SERVER['APP_KEY'] = $key;
 }
 
-if (($_SERVER['REQUEST_URI'] ?? '/') === '/' && env_value('DB_HOST') === null && env_value('DB_URL') === null) {
+$requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
+
+if (str_starts_with($requestPath, '/api/v1') && ! has_database_config()) {
+    send_mock_api_response($requestPath);
+}
+
+if ($requestPath === '/' && ! has_database_config()) {
     send_vercel_fallback('Missing Vercel database environment variables: DB_HOST or DB_URL.');
 }
 

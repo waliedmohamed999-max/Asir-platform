@@ -9,11 +9,35 @@
   },
   "routes": [
     {
+      "src": "/",
+      "dest": "/public/mobile-app/index.html"
+    },
+    {
       "src": "/health",
       "dest": "/api/health.php"
     },
     {
-      "src": "/(build|branding|uploads|mobile-app)/(.*)",
+      "src": "/mobile-app",
+      "dest": "/public/mobile-app/index.html"
+    },
+    {
+      "src": "/mobile-app/",
+      "dest": "/public/mobile-app/index.html"
+    },
+    {
+      "src": "/mobile-app/(assets|canvaskit|icons)/(.*)",
+      "dest": "/public/mobile-app/$1/$2"
+    },
+    {
+      "src": "/mobile-app/(.*\\.(js|json|png|ico|wasm|symbols|bin|otf|frag))",
+      "dest": "/public/mobile-app/$1"
+    },
+    {
+      "src": "/mobile-app/(.*)",
+      "dest": "/public/mobile-app/index.html"
+    },
+    {
+      "src": "/(build|branding|uploads)/(.*)",
       "dest": "/public/$1/$2"
     },
     {
