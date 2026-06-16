@@ -10,7 +10,7 @@
   "routes": [
     {
       "src": "/",
-      "dest": "/mobile-app/index.html"
+      "dest": "/api/index.php"
     },
     {
       "src": "/health",
