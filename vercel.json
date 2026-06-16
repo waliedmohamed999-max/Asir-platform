@@ -1,7 +1,6 @@
 {
   "version": 2,
   "framework": null,
-  "outputDirectory": "public",
   "functions": {
     "api/*.php": {
       "runtime": "vercel-php@0.7.4"
@@ -10,7 +9,7 @@
   "routes": [
     {
       "src": "/",
-      "dest": "/public/mobile-app/index.html"
+      "dest": "/mobile-app/index.html"
     },
     {
       "src": "/health",
@@ -18,31 +17,18 @@
     },
     {
       "src": "/mobile-app",
-      "dest": "/public/mobile-app/index.html"
+      "dest": "/mobile-app/index.html"
     },
     {
       "src": "/mobile-app/",
-      "dest": "/public/mobile-app/index.html"
+      "dest": "/mobile-app/index.html"
     },
     {
-      "src": "/mobile-app/(assets|canvaskit|icons)/(.*)",
-      "dest": "/public/mobile-app/$1/$2"
-    },
-    {
-      "src": "/mobile-app/(.*\\.(js|json|png|ico|wasm|symbols|bin|otf|frag))",
-      "dest": "/public/mobile-app/$1"
+      "handle": "filesystem"
     },
     {
       "src": "/mobile-app/(.*)",
-      "dest": "/public/mobile-app/index.html"
-    },
-    {
-      "src": "/(build|branding|uploads)/(.*)",
-      "dest": "/public/$1/$2"
-    },
-    {
-      "src": "/(favicon.ico|robots.txt|index.php)",
-      "dest": "/public/$1"
+      "dest": "/mobile-app/index.html"
     },
     {
       "src": "/(.*)",
