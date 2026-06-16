@@ -53,92 +53,43 @@ HTML;
     exit;
 }
 
-function send_json(array $payload, int $status = 200): void
+function set_env_value(string $key, string $value): void
 {
-    http_response_code($status);
-    header('Content-Type: application/json; charset=utf-8');
-    header('Cache-Control: no-store');
-
-    echo json_encode($payload, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES);
-    exit;
+    putenv($key . '=' . $value);
+    $_ENV[$key] = $value;
+    $_SERVER[$key] = $value;
 }
 
-function has_database_config(): bool
+function runtime_temp_dir(): string
 {
-    return env_value('DB_URL') !== null || env_value('DB_HOST') !== null;
+    return DIRECTORY_SEPARATOR === '\\'
+        ? dirname(__DIR__) . '/storage/vercel-runtime'
+        : '/tmp';
 }
 
-function send_mock_api_response(string $path): void
+function configure_demo_database(): void
 {
-    $event = [
-        'id' => 1,
-        'slug' => 'aseer-demo-event',
-        'title' => 'منصة عسير جاهزة للتشغيل',
-        'subtitle' => 'أضف بيانات قاعدة البيانات في Vercel لإظهار الفعاليات الحقيقية',
-        'description' => 'هذا محتوى مؤقت يظهر فقط عند عدم ضبط قاعدة البيانات.',
-        'image_url' => '/branding/aseer-logo.png',
-        'banner_image_url' => '/branding/aseer-logo.png',
-        'venue_name' => 'عسير',
-        'starts_at' => gmdate('c', strtotime('+3 days')),
-        'start_date' => gmdate('Y-m-d H:i:s', strtotime('+3 days')),
-        'starting_price' => 0,
-        'is_featured' => true,
-        'category' => ['id' => 1, 'slug' => 'events', 'name' => 'فعاليات'],
-        'city' => ['id' => 1, 'slug' => 'aseer', 'name' => 'عسير'],
-        'tickets' => [],
-    ];
-
-    if ($path === '/api/v1/home') {
-        send_json([
-            'banners' => [[
-                'title' => 'منصة عسير تعمل الآن',
-                'subtitle' => 'النشر ناجح، وتفعيل البيانات يحتاج DB فقط',
-                'badge' => 'Vercel',
-                'image_url' => '/branding/aseer-logo.png',
-                'hero_image_url' => '/branding/aseer-logo.png',
-            ]],
-            'quick_actions' => [],
-            'trending_searches' => ['عسير', 'فعاليات', 'تذاكر'],
-            'sections' => [
-                'app_stories' => [],
-                'events' => [$event],
-                'recommended' => [$event],
-                'trending' => [$event],
-                'upcoming' => [$event],
-                'featured_events' => [],
-                'featured_tourism' => [],
-                'today_cards' => [],
-                'experience_cards' => [],
-                'offers' => [],
-                'services' => [],
-                'places' => [],
-                'most_requested' => [],
-                'nearby' => [],
-                'today' => [$event],
-            ],
-            'filters' => [
-                'cities' => [$event['city']],
-                'categories' => [$event['category']],
-            ],
-        ]);
+    if (env_value('DB_URL') !== null || env_value('DB_HOST') !== null) {
+        return;
     }
 
-    if ($path === '/api/v1/events') {
-        send_json(['data' => [$event], 'meta' => ['database_configured' => false]]);
+    $source = __DIR__ . '/../database/vercel.sqlite';
+    $target = runtime_temp_dir() . '/aseer-vercel.sqlite';
+
+    if (! is_file($source)) {
+        return;
     }
 
-    if ($path === '/api/v1/resale-listings') {
-        send_json(['data' => []]);
+    if (! is_dir(dirname($target))) {
+        @mkdir(dirname($target), 0777, true);
     }
 
-    if (preg_match('#^/api/v1/(offers|services|venues|cities|categories|recommendations)$#', $path)) {
-        send_json(['data' => []]);
+    if (! is_file($target) || filesize($target) !== filesize($source)) {
+        copy($source, $target);
     }
 
-    send_json([
-        'message' => 'Database environment variables are not configured on Vercel yet.',
-        'required' => ['DB_HOST or DB_URL', 'DB_DATABASE', 'DB_USERNAME', 'DB_PASSWORD'],
-    ], 503);
+    set_env_value('DB_CONNECTION', 'sqlite');
+    set_env_value('DB_DATABASE', $target);
 }
 
 foreach ([
@@ -149,8 +100,8 @@ foreach ([
     'CACHE_STORE' => 'array',
     'SESSION_DRIVER' => 'cookie',
     'QUEUE_CONNECTION' => 'sync',
-    'VIEW_COMPILED_PATH' => '/tmp/laravel-views',
-    'LARAVEL_STORAGE_PATH' => '/tmp/laravel-storage',
+    'VIEW_COMPILED_PATH' => runtime_temp_dir() . '/laravel-views',
+    'LARAVEL_STORAGE_PATH' => runtime_temp_dir() . '/laravel-storage',
 ] as $key => $value) {
     if (empty($_ENV[$key]) && empty($_SERVER[$key]) && getenv($key) === false) {
         putenv($key . '=' . $value);
@@ -169,24 +120,18 @@ if (empty($_ENV['APP_KEY']) && empty($_SERVER['APP_KEY']) && getenv('APP_KEY') =
 
 $requestPath = parse_url($_SERVER['REQUEST_URI'] ?? '/', PHP_URL_PATH) ?: '/';
 
-if (str_starts_with($requestPath, '/api/v1') && ! has_database_config()) {
-    send_mock_api_response($requestPath);
-}
-
-if ($requestPath === '/' && ! has_database_config()) {
-    send_vercel_fallback('Missing Vercel database environment variables: DB_HOST or DB_URL.');
-}
+configure_demo_database();
 
 foreach ([
-    '/tmp/laravel-storage/app',
-    '/tmp/laravel-storage/framework/cache/data',
-    '/tmp/laravel-storage/framework/sessions',
-    '/tmp/laravel-storage/framework/views',
-    '/tmp/laravel-storage/logs',
-    '/tmp/laravel-views',
+    env_value('LARAVEL_STORAGE_PATH') . '/app',
+    env_value('LARAVEL_STORAGE_PATH') . '/framework/cache/data',
+    env_value('LARAVEL_STORAGE_PATH') . '/framework/sessions',
+    env_value('LARAVEL_STORAGE_PATH') . '/framework/views',
+    env_value('LARAVEL_STORAGE_PATH') . '/logs',
+    env_value('VIEW_COMPILED_PATH'),
 ] as $directory) {
     if (! is_dir($directory)) {
-        mkdir($directory, 0777, true);
+        @mkdir($directory, 0777, true);
     }
 }
 
