@@ -27,21 +27,31 @@ function send_vercel_fallback(string $reason, int $status = 200): void
         .card{border:1px solid #e6e9f2;border-radius:24px;background:#fff;padding:36px;box-shadow:0 24px 64px rgba(15,23,42,.08)}
         h1{margin:0 0 12px;font-size:clamp(32px,6vw,64px);line-height:1.1}
         p{color:#64748b;font-size:18px;line-height:1.9;max-width:760px}
+        .grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-top:28px}
+        .event{border:1px solid #e5e9f2;border-radius:16px;padding:18px;background:#f8fafc}
+        .event b{display:block;margin-bottom:8px;font-size:18px}
         .actions{display:flex;flex-wrap:wrap;gap:12px;margin-top:28px}
         a{display:inline-flex;min-height:48px;align-items:center;justify-content:center;border-radius:999px;padding:0 24px;font-weight:800;text-decoration:none}
         .primary{background:#111827;color:white}
         .ghost{border:1px solid #d8deea;color:#111827}
         .note{margin-top:24px;border-radius:16px;background:#f8fafc;padding:16px;color:#64748b;font-size:13px;direction:ltr;text-align:left;overflow-wrap:anywhere}
+        @media(max-width:820px){.grid{grid-template-columns:1fr}}
     </style>
 </head>
 <body>
     <main class="wrap">
         <section class="card">
-            <h1>منصة عسير تعمل على Vercel</h1>
-            <p>تم تشغيل النشر بنجاح. لتفعيل لوحة التحكم والبيانات الحية بالكامل، أضف متغيرات قاعدة البيانات في إعدادات Vercel ثم أعد النشر.</p>
+            <h1>اكتشف فعاليات وتجارب منصة عسير</h1>
+            <p>واجهة الموقع العامة تعمل الآن. استعرض الفعاليات، افتح التطبيق، أو ادخل إلى لوحة التحكم التجريبية.</p>
+            <div class="grid">
+                <div class="event"><b>Cyan Waterpark - جدة</b><span>مغامرات مائية عائلية من 60 ر.س</span></div>
+                <div class="event"><b>حفلات الموسم</b><span>أمسيات موسيقية وعروض حية</span></div>
+                <div class="event"><b>كأس الرياض</b><span>فعاليات رياضية وتجارب جماهيرية</span></div>
+            </div>
             <div class="actions">
-                <a class="primary" href="/mobile-app/">فتح تطبيق Flutter Web</a>
-                <a class="ghost" href="/health">فحص السيرفر</a>
+                <a class="primary" href="/login">تسجيل الدخول</a>
+                <a class="ghost" href="/admin">لوحة التحكم</a>
+                <a class="ghost" href="/mobile-app/">تطبيق Flutter</a>
             </div>
             <div class="note">$safeReason</div>
         </section>
