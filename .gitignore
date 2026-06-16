@@ -17,6 +17,7 @@
 /bootstrap/cache/*.tmp
 /composer.phar
 /composer-setup.php
+/database/*.sqlite*
 /_debug*.php
 /.codex-temp-*.php
 npm-debug.log
