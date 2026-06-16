@@ -9,6 +9,7 @@ foreach ([
     'SESSION_DRIVER' => 'cookie',
     'QUEUE_CONNECTION' => 'sync',
     'VIEW_COMPILED_PATH' => '/tmp/laravel-views',
+    'LARAVEL_STORAGE_PATH' => '/tmp/laravel-storage',
 ] as $key => $value) {
     if (empty($_ENV[$key]) && empty($_SERVER[$key]) && getenv($key) === false) {
         putenv($key . '=' . $value);
@@ -25,8 +26,17 @@ if (empty($_ENV['APP_KEY']) && empty($_SERVER['APP_KEY']) && getenv('APP_KEY') =
     $_SERVER['APP_KEY'] = $key;
 }
 
-if (! is_dir('/tmp/laravel-views')) {
-    mkdir('/tmp/laravel-views', 0777, true);
+foreach ([
+    '/tmp/laravel-storage/app',
+    '/tmp/laravel-storage/framework/cache/data',
+    '/tmp/laravel-storage/framework/sessions',
+    '/tmp/laravel-storage/framework/views',
+    '/tmp/laravel-storage/logs',
+    '/tmp/laravel-views',
+] as $directory) {
+    if (! is_dir($directory)) {
+        mkdir($directory, 0777, true);
+    }
 }
 
 $_SERVER['SCRIPT_NAME'] = '/index.php';
