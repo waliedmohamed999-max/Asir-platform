@@ -1,0 +1,25 @@
+{
+  "version": 2,
+  "framework": null,
+  "buildCommand": "npm install && npm run build",
+  "outputDirectory": "public",
+  "functions": {
+    "api/index.php": {
+      "runtime": "vercel-php@0.7.3"
+    }
+  },
+  "routes": [
+    {
+      "src": "/(build|branding|uploads|mobile-app)/(.*)",
+      "dest": "/public/$1/$2"
+    },
+    {
+      "src": "/(favicon.ico|robots.txt|index.php)",
+      "dest": "/public/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/api/index.php"
+    }
+  ]
+}
